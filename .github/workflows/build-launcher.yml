@@ -1,0 +1,20 @@
+name: Build Apple TV Launcher
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-34 build-tools;34.0.0'
+      - name: Build launcher for Android 7.1 / ARMv7
+        run: ANDROID_HOME="$ANDROID_SDK_ROOT" bash launcher/build-and-install.sh --build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tvhome-launcher-apk
+          path: launcher/build/tvhome.apk
