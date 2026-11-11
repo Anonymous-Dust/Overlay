@@ -345,9 +345,14 @@ public class MainActivity extends Activity {
             android.content.pm.ChangedPackages changed = pm.getChangedPackages(packageSeq);
             if (changed != null) packageSeq = changed.getSequenceNumber();
         }
-        Intent q = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
         Map<String, App> byPkg = new HashMap<>();
-        for (ResolveInfo ri : pm.queryIntentActivities(q, 0)) {
+        // Some Android TV apps (including Barqibox) expose only the regular
+        // LAUNCHER category. Read both categories so they are not omitted.
+        Intent[] queries = {
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER),
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        };
+        for (Intent q : queries) for (ResolveInfo ri : pm.queryIntentActivities(q, 0)) {
             ActivityInfo ai = ri.activityInfo;
             if (hidden.contains(ai.packageName) || byPkg.containsKey(ai.packageName)) continue;
             App a = new App();
@@ -360,6 +365,24 @@ public class MainActivity extends Activity {
             a.art = banner != null ? banner : ri.loadIcon(pm);
             a.color = sampleColor(a.pkg, a.art);
             byPkg.put(a.pkg, a);
+        }
+
+        // Pinned apps must remain visible even if a vendor's package manager
+        // does not return them from either category query.
+        for (String pkg : dockApps) {
+            if (byPkg.containsKey(pkg) || !isInstalled(pkg)) continue;
+            Intent launch = pm.getLeanbackLaunchIntentForPackage(pkg);
+            if (launch == null) launch = pm.getLaunchIntentForPackage(pkg);
+            if (launch == null || launch.getComponent() == null) continue;
+            try {
+                App a = new App();
+                a.pkg = pkg;
+                a.component = launch.getComponent();
+                a.label = String.valueOf(pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)));
+                a.art = pm.getApplicationIcon(pkg);
+                a.color = sampleColor(a.pkg, a.art);
+                byPkg.put(pkg, a);
+            } catch (PackageManager.NameNotFoundException ignored) { }
         }
 
         List<App> dock = new ArrayList<>();
