@@ -7,7 +7,7 @@
     <!-- Dock apps, left to right. Apps that aren't installed are skipped. -->
     <string-array name="dock_apps">
         <item>org.smarttube.stable</item>
-        <item>com.community.mbox.tv</item>
+        <item>com.barqitech.zaqia.tv</item>
         <item>com.droidlogic.mediacenter</item>
         <item>com.droidlogic.FileBrower</item>
         <item>com.droidlogic.tv.settings</item>
